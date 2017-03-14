@@ -1,6 +1,5 @@
 class CellManager(object):
-    '''Represent a group of cells.'''
-
+    'Represent a group of cells.'
     cells = []
 
     def all(self):
@@ -16,53 +15,60 @@ class CellManager(object):
 
     def living_cells(self):
         'Returns list of living cells.'
+        living_cells = [cell for cell in self.cells if cell.is_alive]
+        return living_cells
 
-        _cells = [cell for cell in self.cells if cell.is_alive]
-        return _cells
+    def get_living_neighbours(self, cell):
+        'Returns list of living neighbours.'
+        living_neighbours = [cell
+                             for cell in self.get_neighbours(cell)
+                             if cell.is_alive]
+        return living_neighbours
 
-    def get_neighbours_of_group(self, of_living=True):
-        'Gets set of neighbours of given group of cells.'''
+    def get_neighbours(self, cell):
+        'Returns neighbours of particular cell.'
+        x, y = cell.position
+        neighbours = [(k, l)
+                      for k in range(x - 1, x + 2)
+                      for l in range(y - 1, y + 2)]
+        neighbours.remove(cell.position)
+        return [self.get(neighbour) for neighbour in neighbours]
 
-        if of_living:
-            _neighbours = []
-            for cell in self.cells:
-                if cell.is_alive:
-                    for neighbour in cell.get_neighbours():
-                        _neighbours.append(neighbour)
-            return [self.get(position)
-                    for position in set(_neighbours)
-                    if self.get(position) is not None]
-        return {self.get(neighbour)
-                for cell in self.cells
-                for neighbour in cell.get_neighbours()
-                if self.get(neighbour) is not None}
+    def get_neighbours_of_living_cells(self):
+        'Returns list of neighbours of living cells.'
+        cells = set()
+        for cell in self.living_cells():
+            for neighbour in self.get_neighbours(cell):
+                if neighbour is not None:
+                    cells.add(neighbour)
+        return list(cells)
+
+    def get_significant_cells(self):
+        'Returns list of significant cells.'
+        cells = set()
+        for cell in self.living_cells():
+            cells.add(cell)
+            for neighbour in self.get_neighbours(cell):
+                if neighbour is not None:
+                    cells.add(neighbour)
+        return list(cells)
 
 
 class Cell(object):
-    '''Represents cell object.'''
-
+    'Represents cell object.'
     manager = CellManager()
 
-    def __init__(self, position, colony=None, is_alive=True):
+    def __init__(self, position, is_alive=True):
         self.position = position
-        self.colony = colony
         self.is_alive = is_alive
-        self.neighbours = None
         self.manager.cells.append(self)
+
+    def __repr__(self):
+        x, y = self.position
+        return '<{} pos: {}, {}>'.format(self.__class__.__name__, x, y)
 
     def born(self):
         self.is_alive = True
 
     def die(self):
         self.is_alive = False
-
-    def get_neighbours(self):
-        'Returns list of postions of its neighbours.'
-
-        if self.neighbours is None:
-            x, y = self.position
-            self.neighbours = [(k, l)
-                               for k in range(x - 1, x + 2)
-                               for l in range(y - 1, y + 2)]
-            self.neighbours.remove(self.position)
-        return self.neighbours
