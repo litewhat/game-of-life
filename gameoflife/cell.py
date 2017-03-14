@@ -2,6 +2,11 @@ class CellManager(object):
     'Represent a group of cells.'
     cells = []
 
+    def __init__(self, rules=None):
+        if rules is None:
+            rules = [(1, ), (1, )]
+        self.rules = rules
+
     def all(self):
         return self.cells
 
@@ -32,7 +37,9 @@ class CellManager(object):
                       for k in range(x - 1, x + 2)
                       for l in range(y - 1, y + 2)]
         neighbours.remove(cell.position)
-        return [self.get(neighbour) for neighbour in neighbours]
+        return [self.get(neighbour)
+                for neighbour in neighbours
+                if self.get(neighbour) is not None]
 
     def get_neighbours_of_living_cells(self):
         'Returns list of neighbours of living cells.'
@@ -52,6 +59,20 @@ class CellManager(object):
                 if neighbour is not None:
                     cells.add(neighbour)
         return list(cells)
+
+    def future(self, cell):
+        survive_when, born_when = self.rules
+        living_neighbours = self.get_living_neighbours(cell)
+        if cell.is_alive:
+            if len(living_neighbours) in survive_when:
+                return 'will survive'
+            else:
+                return 'will die'
+        else:
+            if len(living_neighbours) in born_when:
+                return 'will born'
+            else:
+                return 'still died'
 
 
 class Cell(object):
